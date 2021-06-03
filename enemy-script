@@ -1,0 +1,80 @@
+extends KinematicBody2D
+
+
+const RED = Color(1, 0.25, 0.25)
+const YELLOW = Color(0.8, 0.8, 0.3)
+
+export var speed = 100
+export var move_dist = 50
+
+onready var player = get_node("../../Player")
+onready var sight = $Sight
+onready var sight_tween = $Sight/Tween
+onready var sight_area = $Sight/SightArea
+onready var sight_sprite = $Sight/Sprite
+onready var alert_sprite = $StateEmoticons/AlertSprite
+
+onready var start_position = position.x
+onready var target_position = start_position + move_dist
+
+var motion = Vector2()
+var gravity = 120
+var player_in_range = false
+var stopped = false
+
+
+func _ready():
+	$Sight.visible = true
+	$Sight/Sprite.modulate = YELLOW
+	$StateEmoticons/AlertSprite.visible = false
+	$StateEmoticons/Sleep.visible = false
+	$AttackButtons.visible = false
+	$CollisionShape2D.disabled = false
+
+
+func _physics_process(delta):
+	motion.y += gravity * delta
+	if not stopped:
+		patrol()
+		move_and_slide(motion)
+		$AttackButtons.update_attack_buttons()
+
+
+func patrol():
+	if position.x <= start_position:
+		motion.x = speed
+		temp_stop()
+		$Sight/Tween.interpolate_property($Sight, "scale", null, Vector2(1, 1), 4.0,\
+			Tween.TRANS_LINEAR,Tween.EASE_IN, 40)
+		$Sight/Tween.start()
+		print("tweening 1")
+	elif position.x > target_position:
+		motion.x = -speed
+		temp_stop()
+		$Sight/Tween.interpolate_property($Sight, "scale", null, Vector2(-1, 1), 4.0,\
+			Tween.TRANS_LINEAR, Tween.EASE_OUT, 40)
+		$Sight/Tween.start()
+		print("tweening 2")
+#
+#
+func temp_stop():
+	stopped = true
+	yield(get_tree().create_timer(4.0), "timeout")
+	stopped = false
+
+
+#ATTACK_BUTTONS
+func show_attacks():
+	$AttackButtons.visible = true
+
+func hide_attacks():
+	$AttackButtons.visible = false
+
+func enable_close_range_attacks():
+	$AttackButtons/InfiltrateAttack.disabled = false
+
+func disable_close_range_attacks():
+	$AttackButtons/InfiltrateAttack.disabled = true
+
+
+
